@@ -17,7 +17,14 @@ via dispositivo físico.
 # configurações e execução
 
 Uma vez feito o clone do projeto o tester/dev deverá entrar no diretório raiz 
-do projeto e executar o comando **npm install ** ou **yarn**, para que as dependências
+do projeto e executar o comando npm install ou yarn, para que as dependências
 possam ser baixadas no mesmo. Uma vez realizado o download o tester/dev deverá 
-rodar o comando **npx expo start **
+rodar o comando: npx expo start
+
+Ao executar este comando, após o starting deverá aparecer um QRCODE da aplicação
+e isso deve ser scaneado via Expo Go. Assim o aplicativo será buildado no dispositivo 
+físico
+![qrcode](https://github.com/igormelo9001/climaApp/assets/23384529/b411033e-d33e-488a-9ac4-a4b3b088b9a8)
+
+obs: O dispositivo deverá estar na mesma rede wifi que a aplicação estiver rodando.
 
