@@ -1,115 +1,72 @@
-import React, {useState, useCallback} from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ImageBackground, 
-  ActivityIndicator, 
-  TextInput} from 'react-native';
-  import axios from 'axios';
+import { StatusBar } from "expo-status-bar"
+import React, {useEffect, useState} from "react"
+import { StyleSheet, Text, View, ImageBackground } from "react-native"  
+import DateTime from './src/components/DateTime'
+import WheatherScroll from "./src/components/WheaterScroll"
+import { API_KEY } from "./ApiKey"
+import * as Location from 'expo-location';
 
-export default function App() {
+const image = require('./assets/buildings.jpg')
+export default function App(){
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
+  const[data, setData] = useState({})
 
-  const [input, setInput] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [data, setData] = useState([])
+  useEffect(() => {
 
-  const api = {
-    key: '7662313e5d4cb17e547af10450bb3e5d',
-    baseUrl: 'http://api.openwheathermap.org/data/2.5/'
+    (async () => {
+      
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      if(!location){
+        setLatitude("40.730610")
+        setLongitude("-73.935242")
+      }else{
+        setLatitude(location.coords.latitude)
+      setLongitude(location.coords.longitude);
+      setLocation(location.coords);
+      }   
+    })();
+
+    fetchDataFromApi(latitude, longitude)
+     
+  },[])
+
+  const fetchDataFromApi = (latitude, longitude) => {
+
+    fetch(`api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}
+    &exclude=hourly,minutely&units=metric&appid=${API_KEY}
+    `).then(res => res.json()).then(data => {
+      console.log(data)
+      setData(data)
+    })
+
   }
 
-  const fetchDataHandler = useCallback(() =>{
-    //console.log('fired');
-    setLoading(true)
-    setInput("")
-    axios({
-      method:"GET",
-      url:`https://api.openweathermap.org/data/2.5/weather?q=${input}&appid=${api.key}`
-    })
-    .then(res => {
-      console.log(res.data)
-      setData(res.data)
-    })
-    .catch(e => console.dir(e))
-    .finally((() => setLoading(false)))
-  } , [api.key, input])
-
-  return (
-    <View style={styles.root}>
-      <ImageBackground source={require('./assets/buildings.jpg')}
-      resizeMode='cover' 
-      style={styles.Image}>
-
-        <View>
-          <TextInput placeholder='Busque uma cidade'
-            onChangeText={text=>setInput(text)}
-            value={input}
-            placeholderTextColor={"#AAA"}
-            style={styles.textInput}
-            onSubmitEditing={fetchDataHandler}
-          />
-        </View>
-          {loading && (
-            <View>
-              <ActivityIndicator size={'large'} color="#fff"/>
-            </View>
-            )}
-
-            { data && 
-            <View style={styles.infoView}>
-              <Text style={styles.cityCountryText}>
-                {`${data?.name}, ${data?.sys?.country}`}
-              </Text>
-              <Text style={styles.dateText}>{new Date().toLocaleString()}</Text>
-              <Text style={styles.tempText}>{`${Math.round(data?.main?.temp - 273.15)} °C`}</Text>
-              <Text style={styles.minMaxText}>{`Min ${Math.round(data?.main?.temp_min - 273.15)} °C / Max ${Math.round(data?.main?.temp_max - 273.15)} °C`}</Text>
-            </View>
-            }
-      </ImageBackground>
+  return(
+    <View style={styles.container}>
+        <ImageBackground source={image} style={styles.image}> 
+          <DateTime current={data.current} timezone={data.timezone} lat={data.lat} lon={data.lon}/>
+          <WheatherScroll />
+        </ImageBackground>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  Image:{
+  container: {
     flex:1,
-    flexDirection:"column"
-  }, 
-  textInput: {
-    borderBottomWidth:3,
-    padding:5,
-    paddingVertical:20,
-    marginVertical:100,
-    marginHorizontal: 10,
-    backgroundColor:"white",
-    borderRadius:16,
-    borderBottomColor:"#df8e00"
   },
-  infoView:{
-    alignItems: 'center'
-  },
-  cityCountryText:{
-    color:'#fff',
-    fontSize:40,
-    fontWeight: 'bold'
-  },
-  dateText:{
-    color:'#fff',
-    fontSize: 22,
-    marginVertical: 10
-  },
-
-  tempText:{
-    color:'#fff',
-    fontSize:45,
-    marginVertical: 10,
-  },
-  minMaxText:{
-    fontSize:22,
-    color:'#fff'
+  image:{
+    flex:1,
+    resizeMode:"cover", 
+    justifyContent:"center"
   }
-});
+})
